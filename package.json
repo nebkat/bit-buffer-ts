@@ -1,18 +1,12 @@
 {
-  "name": "bit-buffer",
-  "version": "0.2.4",
-  "description": "Bit-level reads and writes for ArrayBuffers",
-  "main": "bit-buffer.js",
-  "types": "./bit-buffer.d.ts",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "test": "make test"
-  },
+  "name": "@ntrip/bit-buffer",
+  "version": "0.3.1",
+  "description": "Bit-level reads and writes for Node.js Buffers",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git://github.com/inolen/bit-buffer.git"
+    "url": "git://github.com/node-ntrip/bit-buffer.git"
   },
   "keywords": [
     "dataview",
@@ -22,14 +16,13 @@
   ],
   "author": "Anthony Pesch",
   "contributors": [
-    "Robin Appelman"
+    "Robin Appelman",
+    "Nebojša Cvetković <nebkat@gmail.com> (http://cvetkovic.ie)"
   ],
   "license": "MIT",
-  "gitHead": "cd4417237bed1f22dd5adfd8a6b961ea7234d9c9",
-  "readmeFilename": "README.md",
   "devDependencies": {
-    "@types/node": "^7.0.5",
-    "jshint": "^2.9.4",
-    "mocha": "^3.2.0"
-  }
+    "@types/node": "^12.12.31",
+    "typescript": "^3.8.3"
+  },
+  "readmeFilename": "README.md"
 }
