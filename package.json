@@ -1,12 +1,15 @@
 {
   "name": "@ntrip/bit-buffer",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "description": "Bit-level reads and writes for Node.js Buffers",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git://github.com/node-ntrip/bit-buffer.git"
+  },
+  "scripts": {
+    "build": "tsc"
   },
   "keywords": [
     "dataview",
