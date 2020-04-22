@@ -1,6 +1,6 @@
 {
   "name": "@ntrip/bit-buffer",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Bit-level reads and writes for Node.js Buffers",
   "main": "build/index.js",
   "types": "build/index.d.ts",
