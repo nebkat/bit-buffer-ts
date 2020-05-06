@@ -3,63 +3,71 @@ export class BitView {
     readonly bitLength: number;
     readonly byteLength: number;
 
-    bigEndian = true;
-
     constructor(source: Buffer, private byteStart: number = 0, readonly byteEnd: number = source.length) {
-        this.buffer = source.slice(byteStart, byteEnd);
+        this.buffer = (byteStart === 0 && byteEnd === source.length) ? source : source.slice(byteStart, byteEnd);
         this.byteLength = this.buffer.length;
         this.bitLength = this.byteLength * 8;
     }
 
     private checkBounds(offset: number, bits: number) {
-        let available = (this.bitLength - offset);
+        const available = (this.bitLength - offset);
 
         if (bits > available)
             throw new Error('Cannot get/set ' + bits + ' bit(s) from offset ' + offset + ', ' + available + ' available');
     }
 
     getBit(offset: number): boolean {
-        this.checkBounds(offset, 1);
-
-        let bitOffset = offset & 7;
-        let byteOffset = offset >> 3;
-
-        return (this.buffer[byteOffset] >> (7 - bitOffset) & 0b1) === 1;
+        return (this.buffer[offset >> 3] >> (7 - (offset & 0b111)) & 0b1) > 0;
     }
 
     getBits(offset: number, bits: number, signed: boolean) {
         this.checkBounds(offset, bits);
 
-        let bitOffset = offset & 0b111;
-        let startByte = offset >> 3;
-        let endByte = startByte + ((bits + bitOffset) >> 3);
+        const startBitOffset = offset & 0b111;
+        const startBits = 8 - startBitOffset;
+        const endBits = (offset + bits) & 0b111 || 8;
+        const endBitOffset = 8 - endBits;
+
+        const startByte = offset >> 3;
+        const endByte = (offset + bits - 1) >> 3;
 
         let big = 0;
         let written = 0;
         for (let i = startByte; i <= endByte; i++) {
             let byte = this.buffer[i];
-            if (i === startByte) byte &= 0xff >> bitOffset;
-            if (i === endByte) byte >>= 8 - ((bits + bitOffset) & 7);
-            if (i !== startByte) {
-                let shift = i === endByte ? (bits + bitOffset) & 7 : 8;
-                written += shift;
-                if (written < 32) {
-                    big <<= shift;
-                } else {
-                    big *= 2**shift;
-                }
+            let shift = 8;
+
+            // Mask wanted bits from start byte
+            if (i === startByte) {
+                byte &= ~(~0 << startBits);
+                written += startBits;
             }
-            if (written < 32) big |= byte; else big += byte;
+            // Shift wanted bits from end byte
+            if (i === endByte) {
+                byte >>= endBitOffset;
+                shift = endBits;
+            }
+
+            // Shift existing bits
+            if (i !== startByte) {
+                written += shift;
+                if (written <= 32) big <<= shift; else big *= 2 ** shift;
+            }
+
+            // Add current byte
+            if (written <= 32) big |= byte; else big += byte;
+            // Convert back to unsigned once 32 bits have been written
+            if (!signed && written === 32) big >>>= 0;
         }
 
         if (signed) {
             // If we're not working with a full 32 bits, check the
             // imaginary MSB for this bit count and convert to a
             // valid 32-bit signed value if set.
-            if (bits < 32 && big & (1 << (bits - 1))) {
+            if (bits < 32 && big >> (bits - 1) > 0) {
                 big |= -1 ^ ((1 << bits) - 1);
-            } else if (big > 2**(bits - 1)) {
-                big -= 2**(bits);
+            } else if (bits > 32 && big > 2 ** (bits - 1)) {
+                big -= 2 ** bits;
             }
 
             return big;
@@ -69,59 +77,52 @@ export class BitView {
     }
 
     setBit(offset: number, value: boolean) {
-        this.checkBounds(offset, 1);
-
-        let bitOffset = offset & 7;
-        let byteOffset = offset >> 3;
-
-        let mask = 0b1 << (7 - bitOffset);
-        if (value) {
-            this.buffer[byteOffset] |= mask;
-        } else {
-            this.buffer[byteOffset] &= ~mask;
-        }
+        if (value) this.buffer[offset >> 3] |= 0b10000000 >> (offset & 0b111);
+        else this.buffer[offset >> 3] &= ~(0b10000000 >> (offset & 0b111));
     }
 
     setBits(offset: number, value: number, bits: number) {
         this.checkBounds(offset, bits);
 
-        for (let i = 0; i < bits;) {
-            let remaining = bits - i;
-            let bitOffset = offset & 7;
-            let byteOffset = offset >> 3;
-            let wrote = Math.min(remaining, 8 - bitOffset);
+        const startBitOffset = offset & 0b111;
+        const endBitOffset = 8 - ((offset + bits) & 0b111 || 8);
 
-            let mask, writeBits, destMask;
-            if (this.bigEndian) {
-                // create a mask with the correct bit width
-                mask = ~(~0 << wrote);
-                // shift the bits we want to the start of the byte and mask of the rest
-                writeBits = bits <= 32 ? ((value >> (bits - i - wrote)) & mask) : (value / (2**(bits - i - wrote)) & mask);
+        const startByte = offset >> 3;
+        const endByte = (offset + bits - 1) >> 3;
 
-                let destShift = 8 - bitOffset - wrote;
-                // destination mask to zero all the bits we're changing first
-                destMask = ~(mask << destShift);
+        for (let i = endByte; i >= startByte; i--) {
+            let read = 8;
+            let shift = 0;
+            let mask = 0b11111111;
 
-                this.buffer[byteOffset] =
-                        (this.buffer[byteOffset] & destMask)
-                        | (writeBits << destShift);
-            } else {
-                // create a mask with the correct bit width
-                mask = ~(0xFF << wrote);
-                // shift the bits we want to the start of the byte and mask of the rest
-                writeBits = value & mask;
-                value >>= wrote;
-
-                // destination mask to zero all the bits we're changing first
-                destMask = ~(mask << bitOffset);
-
-                this.buffer[byteOffset] =
-                        (this.buffer[byteOffset] & destMask)
-                        | (writeBits << bitOffset);
+            // Mask write bits in start byte
+            if (i === startByte) {
+                read -= startBitOffset;
+                mask &= 0b11111111 >> startBitOffset;
             }
 
-            offset += wrote;
-            i += wrote;
+            // Mask write bits in end byte
+            if (i === endByte) {
+                read -= endBitOffset;
+                mask &= 0b11111111 << endBitOffset;
+                shift = endBitOffset;
+            }
+
+            // Read required number of bits
+            let byte: number;
+            if (bits <= 32) {
+                byte = value & ~(~0 << read);
+                value >>= read;
+            } else {
+                const divisor = 2 ** read;
+                byte = value % divisor;
+                if (byte < 0) byte += divisor;
+                value = (value - byte) / divisor;
+            }
+            bits -= read;
+
+            // Write to buffer
+            this.buffer[i] = (this.buffer[i] & ~mask) | (byte << shift);
         }
     }
 
@@ -142,17 +143,13 @@ export class BitView {
     setUint32 = (offset: number, value: number) => this.setBits(offset, value, 32);
 
     getBuffer(offset: number, byteLength: number): Buffer {
-        let buffer = Buffer.allocUnsafe(byteLength);
-        for (let i = 0; i < byteLength; i++) {
-            buffer[i] = this.getUint8(offset + (i * 8));
-        }
+        const buffer = Buffer.allocUnsafe(byteLength);
+        for (let i = 0; i < byteLength; i++) buffer[i] = this.getUint8(offset + (i * 8));
         return buffer;
     }
 
     writeBuffer(offset: number, buffer: Buffer): void {
-        for (let i = 0; i < buffer.length; i++) {
-            this.setUint8(offset + (i * 8), buffer[i]);
-        }
+        for (let i = 0; i < buffer.length; i++) this.setUint8(offset + (i * 8), buffer[i]);
     }
 
     getString(offset: number, byteLength: number, encoding?: BufferEncoding): string {
@@ -175,6 +172,8 @@ export class BitStream {
     readonly bitLength: number;
     readonly byteLength: number;
 
+    constructor(source: BitView);
+    constructor(source: Buffer, byteStart?: number, byteEnd?: number);
     constructor(source: BitView | Buffer, byteStart?: number, byteEnd?: number) {
         this.view = source instanceof BitView ? source : new BitView(source, byteStart, byteEnd);
 
@@ -191,9 +190,6 @@ export class BitStream {
 
     get byteIndex() { return Math.ceil(this.bitIndex / 8); }
     set byteIndex(val) { this.bitIndex = val * 8; }
-
-    get bigEndian() { return this.view.bigEndian; }
-    set bigEndian(val) { this.view.bigEndian = val; }
 
     readBit() {
         const val = this.view.getBit(this.bitIndex);
