@@ -144,7 +144,7 @@ export class BitView {
             // Read required number of bits
             let byte: number;
             if (bits <= 32) {
-                byte = value & (0b11111111 >> read);
+                byte = value & (0b11111111 >> (8 - read));
                 value >>= read;
             } else {
                 const divisor = 2 ** read;
