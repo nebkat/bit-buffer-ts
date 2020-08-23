@@ -1,131 +1,253 @@
-# BitBuffer
+# @ntrip/bit-buffer
+Modification of the original [bit-buffer](https://www.npmjs.com/package/bit-buffer) by [inolen](https://github.com/inolen/bit-buffer), changing to TypeScript and modifying methods relating to buffer/string reading/writing.
 
-BitBuffer provides two objects, `BitView` and `BitStream`. `BitView` is a wrapper for ArrayBuffers, similar to JavaScript's [DataView](https://developer.mozilla.org/en-US/docs/JavaScript/Typed_arrays/DataView), but with support for bit-level reads and writes. `BitStream` is a wrapper for a `BitView` used to help maintain your current buffer position, as well as to provide higher-level read / write operations such as for ASCII strings.
+BitBuffer provides two objects, BitView and BitStream. BitView is a wrapper for ArrayBuffers with support for bit-level reads and writes. BitStream is a wrapper for a BitView used to help maintain your current buffer position.
 
-## BitView
+## Class: BitView
 
-### Attributes
+Wrapper for `ArrayBuffer`s with support for bit-level reads and writes.
 
-```javascript
-bb.buffer  // Underlying Buffer.
-```
+Similar to JavaScript's [DataView](https://developer.mozilla.org/en-US/docs/JavaScript/Typed_arrays/DataView).
 
-```javascript
-bb.bigEndian = false; // Switch to little endian (default is big)
-```
+### Constructors
 
-### Methods
+####  constructor
 
-#### BitView(buffer, optional byteStart, optional byteEnd)
+\+ **new BitView**(`buffer`: Uint8Array, `byteOffset`: number, `byteLength`: number): *[BitView](#classesbitviewmd)*
 
-Default constructor, takes in a single argument of a Buffer. Optional are the `byteStart` and `byteEnd` arguments to offset and truncate the view's representation of the buffer.
+**Parameters:**
 
-### getBits(offset, bits, signed)
+Name | Type | Default |
+------ | ------ | ------ |
+`buffer` | Uint8Array | - |
+`byteOffset` | number | 0 |
+`byteLength` | number | buffer.length - byteOffset |
 
-Reads `bits` number of bits starting at `offset`.
+**Returns:** *[BitView](#classesbitviewmd)*
 
-### getInt8, getUint8, getInt16, getUint16, getInt32, getUint32(offset)
+### Properties
 
-Shortcuts for getBits, setting the correct `bits` / `signed` values.
+#### `Readonly` bitLength: *number*
 
-### setBits(offset, value, bits)
+Length of this view (in bits) from the start of its buffer.
 
-Sets `bits` number of bits starting at `offset`.
+___
 
-### setInt8, setUint8, setInt16, setUint16, setInt32, setUint32(offset)
+#### `Readonly` buffer: *Uint8Array*
 
-Shortcuts for setBits, setting the correct `bits` count.
+Underlying buffer which this view accesses.
 
-### getBuffer(offset, byteLength, optional buffer)
+___
 
-Reads `byteLength` bytes starting at `offset` into a Buffer.
+#### `Readonly` byteLength: *number*
 
-### writeBuffer(offset, buffer)
-
-Writes the contents of `buffer` starting at `offset`.
-
-## BitStream
-
-### Attributes
-
-```javascript
-bb.index;           // Get the current index in bits
-bb.index = 0;       // Set the current index in bits
-```
-
-```javascript
-bb.byteIndex;       // Get current index in bytes.
-bb.byteIndex = 0;   // Set current index in bytes.
-```
-
-```javascript
-bb.view;        // Underlying BitView
-bb.buffer;      // Underlying BitView buffer
-```
-
-```javascript
-bb.length;      // Get the length of the stream in bits
-bb.byteLength;  // Get the length of the stream in bytes
-```
-
-```javascript
-bb.bitsLeft;    // The number of bits left in the stream
-```
-
-```javascript
-bb.bigEndian = true;    // Switch to big endian (default is little)
-```
+Length of this view (in bytes) from the start of its buffer.
 
 ### Methods
 
-#### BitStream(view)
+####  getBit(`offset`: number): *1 | 0*
 
-Default constructor, takes in a single argument of a `BitView`.
+Returns the bit value at the specified bit offset.
 
-#### BitSteam(buffer, optional byteOffset, optional byteLength)
+___
 
-Shortcut constructor that initializes a new `BitView(buffer, byteOffset, byteLength)` for the stream to use.
+####  getBits(`offset`: number, `bits`: number, `signed`: boolean): *number*
 
-#### readBits(bits, signed)
+Returns a `bits` long value at the specified bit offset.
 
-Returns `bits` numbers of bits from the view at the current index, updating the index.
+___
 
-#### writeBits(value, bits)
+####  readBuffer(`offset`: number, `byteLength`: number): *Uint8Array*
 
-Sets `bits` numbers of bits from `value` in the view at the current index, updating the index.
+Returns a buffer containing the bytes at the specified bit offset.
 
-#### readUint8(), readUint16(), readUint32(), readInt8(), readInt16(), readInt32()
- 
-Read a 8, 16 or 32 bits (unsigned) integer at the current index, updating the index.
+___
 
-#### writeUint8(value), writeUint16(value), writeUint32(value), writeInt8(value), writeInt16(value), writeInt32(value)
- 
-Write 8, 16 or 32 bits from `value` as (unsigned) integer at the current index, updating the index.
+####  readString(`offset`: number, `byteLength`: number, `encoding?`: undefined | string): *string*
 
-#### readBoolean()
+Returns a string decoded from the bytes at the specified bit offset.
 
-Read a single bit from the view at the current index, updating the index.
+___
 
-#### writeBoolean(value)
+####  setBit(`offset`: number, `value`: 1 | 0): *void*
 
-Write a single bit to the view at the current index, updating the index.
+Writes the bit value at the specified bit offset.
 
-#### readBuffer(byteLength)
+___
 
-Read `byteLength` bytes of data from the underlying view as a `Buffer`, updating the index.
+####  setBits(`offset`: number, `value`: number, `bits`: number): *void*
 
-### writeBuffer(buffer)
+Writes a `bits` long value at the specified bit offset.
 
-Writes a buffer to the underlying view starting at the current index, updating the index.
+**`remarks`** There is no difference between signed and unsigned values when storing.
 
-#### readString(byteLength, optional encoding)
+___
 
-Reads `byteLength` bytes from the underlying view as a string, updating the index. Optional `encoding` argument sets the string encoding, defaulting to `utf-8`. 
+####  writeBuffer(`offset`: number, `buffer`: Uint8Array): *number*
 
-#### writeString(string, optional byteLength, optional encoding)
+Writes the contents of a buffer at the specified bit offset.
 
-Writes a string to the underlying view starting at the current index, updating the index. If the string is longer than `byteLength` it will be truncated, and if it is shorter 0x00 will be written in its place. Optional `encoding` argument sets the string encoding, defaulting to `utf-8`.
+**Returns:** The number of bytes written.
 
-## license
+___
 
-MIT
+####  writeString(`offset`: number, `string`: string, `byteLength?`: undefined | number): *number*
+
+Writes UTF-8 encoded form of a string to the bytes at the specified bit offset.
+
+**`remarks`** If the encoded string length is less than `byteLength`, the remainder is filled with `0`s.
+
+**`remarks`** If the encoded string length is longer than `byteLength`, it is truncated.
+
+**Returns:** The number of bytes written (may be different from the string length).
+
+___
+
+####  getBoolean, getInt8, getInt16, getInt32, getUint8, getUint16, getUint32, setBoolean, setInt8, setInt16, setInt32, setUint8, setUint16, setUint32
+
+Helper methods, see `getBits` and `setBits`.
+
+
+## Class: BitStream
+
+Wrapper for [BitView](#classesbitviewmd)s that maintains an index while reading/writing sequential data.
+
+### Constructors
+
+####  constructor
+
+\+ **new BitStream**(`source`: [BitView](#classesbitviewmd)): *[BitStream](#classesbitstreammd)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`source` | [BitView](#classesbitviewmd) |
+
+**Returns:** *[BitStream](#classesbitstreammd)*
+
+\+ **new BitStream**(`source`: Buffer, `byteOffset?`: undefined | number, `byteLength?`: undefined | number): *[BitStream](#classesbitstreammd)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`source` | Buffer |
+`byteOffset?` | undefined &#124; number |
+`byteLength?` | undefined &#124; number |
+
+**Returns:** *[BitStream](#classesbitstreammd)*
+
+### Properties
+
+####  bitIndex: *number*
+
+Current position of this stream (in bits) from/to which data is read/written.
+
+___
+
+#### `Readonly` bitLength: *number*
+
+Length of this stream (in bits) from the start of its buffer.
+
+___
+
+#### `Readonly` buffer: *Uint8Array*
+
+Underlying buffer which this stream accesses.
+
+___
+
+#### `Readonly` byteLength: *number*
+
+Length of this stream (in bytes) from the start of its buffer.
+
+___
+
+#### `Readonly` view: *[BitView](#classesbitviewmd)*
+
+Underlying view which this stream accesses.
+
+### Accessors
+
+####  bitsLeft
+
+• **get bitsLeft**(): *number*
+
+Number of bits remaining in this stream's underlying buffer from the current position.
+
+**Returns:** *number*
+
+___
+
+####  byteIndex
+
+• **get byteIndex**(): *number*
+
+Current position of this stream (in bytes) from/to which data is read/written.
+
+**Returns:** *number*
+
+• **set byteIndex**(`val`: number): *void*
+
+Current position of this stream (in bytes) from/to which data is read/written.
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`val` | number |
+
+**Returns:** *void*
+
+___
+
+####  index
+
+Alias for [bitIndex](#bitindex)
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`val` | number |
+
+**Returns:** *void*
+
+### Methods
+
+####  readBit(): *1 | 0*
+
+___
+
+####  readBits(`bits`: number, `signed`: boolean): *number*
+
+___
+
+####  readBuffer(`byteLength`: number): *Uint8Array*
+
+___
+
+####  readString(`byteLength`: number, `encoding?`: undefined | string): *string*
+
+___
+
+####  writeBit(`value`: 1 | 0): *void*
+
+___
+
+####  writeBits(`value`: number, `bits`: number): *void*
+
+___
+
+####  writeBuffer(`buffer`: Uint8Array): *number*
+
+___
+
+####  writeString(`string`: string, `byteLength?`: undefined | number): *number*
+
+___
+
+####  readBoolean, readInt8, readInt16, readInt32, readUint8, readUint16, readUint32, writeBoolean, writeInt8, writeInt16, writeInt32, writeUint8, writeUint16, writeUint32
+
+Helper methods, see `readBits` and `writeBits`.
