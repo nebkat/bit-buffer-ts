@@ -63,7 +63,7 @@ Returns a buffer containing the bytes at the specified bit offset.
 
 ___
 
-####  readString(`offset`: number, `byteLength`: number, `encoding?`: undefined | string): *string*
+####  readString(`offset`: number, `byteLength`: number, `decoder?`: undefined | TextDecoder): *string*
 
 Returns a string decoded from the bytes at the specified bit offset.
 
@@ -91,9 +91,9 @@ Writes the contents of a buffer at the specified bit offset.
 
 ___
 
-####  writeString(`offset`: number, `string`: string, `byteLength?`: undefined | number): *number*
+####  writeString(`offset`: number, `string`: string, `byteLength?`: undefined | number, `encoder?`: undefined | TextEncoder): *number*
 
-Writes UTF-8 encoded form of a string to the bytes at the specified bit offset.
+Writes an encoded form of a string to the bytes at the specified bit offset.
 
 **`remarks`** If the encoded string length is less than `byteLength`, the remainder is filled with `0`s.
 
@@ -228,7 +228,7 @@ ___
 
 ___
 
-####  readString(`byteLength`: number, `encoding?`: undefined | string): *string*
+####  readString(`byteLength`: number, `decoder?`: undefined | TextDecoder): *string*
 
 ___
 
@@ -244,7 +244,7 @@ ___
 
 ___
 
-####  writeString(`string`: string, `byteLength?`: undefined | number): *number*
+####  writeString(`string`: string, `byteLength?`: undefined | number, `encoder?`: undefined | TextEncoder): *number*
 
 ___
 

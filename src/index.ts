@@ -203,10 +203,10 @@ export class BitView {
      *
      * @param offset Offset of bytes.
      * @param byteLength Number of bytes to read.
-     * @param encoding Encoding to use for {@link TextDecoder}.
+     * @param decoder Optional TextDecoder instance to use when decoding
      */
-    readString(offset: number, byteLength: number, encoding?: string): string {
-        return new TextDecoder(encoding).decode(this.readBuffer(offset, byteLength));
+    readString(offset: number, byteLength: number, decoder: TextDecoder = new TextDecoder()): string {
+        return decoder.decode(this.readBuffer(offset, byteLength));
     }
 
     /**
@@ -215,19 +215,20 @@ export class BitView {
      * @param offset Offset of bytes.
      * @param string String to write.
      * @param byteLength Optional number of bytes to write.
+     * @param encoder Optional TextEncoder instance to use when encoding
      *
      * @returns The number of bytes written (may be different from the string length).
      *
      * @remarks If the encoded string length is less than `byteLength`, the remainder is filled with `0`s.
      * @remarks If the encoded string length is longer than `byteLength`, it is truncated.
      */
-    writeString(offset: number, string: string, byteLength?: number): number {
+    writeString(offset: number, string: string, byteLength?: number, encoder: TextEncoder = new TextEncoder()): number {
         let buffer: Uint8Array;
         if (byteLength === undefined) {
-            buffer = new TextEncoder().encode(string);
+            buffer = encoder.encode(string);
         } else {
             buffer = new Uint8Array(byteLength);
-            new TextEncoder().encodeInto(string, buffer);
+            encoder.encodeInto(string, buffer);
         }
         this.writeBuffer(offset, buffer);
         return buffer.length;
@@ -322,14 +323,14 @@ export class BitStream {
         return length;
     }
 
-    readString(byteLength: number, encoding?: string): string {
-        const string = this.view.readString(this.bitIndex, byteLength, encoding);
+    readString(byteLength: number, decoder?: TextDecoder): string {
+        const string = this.view.readString(this.bitIndex, byteLength, decoder);
         this.bitIndex += byteLength * 8;
         return string;
     }
 
-    writeString(string: string, byteLength?: number): number {
-        const length = this.view.writeString(this.bitIndex, string, byteLength);
+    writeString(string: string, byteLength?: number, encoder?: TextEncoder): number {
+        const length = this.view.writeString(this.bitIndex, string, byteLength, encoder);
         this.bitIndex += length * 8;
         return length;
     }
