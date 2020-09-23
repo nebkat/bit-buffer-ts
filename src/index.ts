@@ -263,8 +263,8 @@ export class BitStream {
     set byteIndex(val) { this.bitIndex = val * 8; }
 
     constructor(source: BitView);
-    constructor(source: Buffer, byteOffset?: number, byteLength?: number);
-    constructor(source: BitView | Buffer, byteOffset?: number, byteLength?: number) {
+    constructor(source: Uint8Array, byteOffset?: number, byteLength?: number);
+    constructor(source: BitView | Uint8Array, byteOffset?: number, byteLength?: number) {
         this.view = source instanceof BitView ? source : new BitView(source, byteOffset, byteLength);
 
         this.buffer = this.view.buffer;
