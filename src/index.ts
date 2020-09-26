@@ -333,7 +333,7 @@ export class BitStream {
         this.bitIndex += bits;
     }
 
-    writeBitArray(values: boolean[], bits: number): void {
+    writeBitArray(values: boolean[], bits: number = values.length): void {
         this.view.setBitArray(this.bitIndex, values, bits);
         this.bitIndex += bits;
     }
