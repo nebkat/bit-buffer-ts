@@ -57,6 +57,12 @@ Returns a `bits` long value at the specified bit offset.
 
 ___
 
+####  getBitArray(`offset`: number, `bits`: number): *boolean[]*
+
+Returns a `bits` long array of bit values at the specified bit offset.
+
+___
+
 ####  readBuffer(`offset`: number, `byteLength`: number): *Uint8Array*
 
 Returns a buffer containing the bytes at the specified bit offset.
@@ -80,6 +86,12 @@ ___
 Writes a `bits` long value at the specified bit offset.
 
 **`remarks`** There is no difference between signed and unsigned values when storing.
+
+___
+
+####  setBitArray(`offset`: number, `value`: boolean[], `bits`: number): *void*
+
+Writes a `bits` long array of bit values at the specified bit offset.
 
 ___
 
@@ -224,6 +236,10 @@ ___
 
 ___
 
+####  readBitArray(`bits`: number): *boolean[]*
+
+___
+
 ####  readBuffer(`byteLength`: number): *Uint8Array*
 
 ___
@@ -237,6 +253,10 @@ ___
 ___
 
 ####  writeBits(`value`: number, `bits`: number): *void*
+
+___
+
+####  writeBitArray(`value`: boolean[], `bits`: number): *void*
 
 ___
 

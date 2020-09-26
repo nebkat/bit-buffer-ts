@@ -95,6 +95,22 @@ export class BitView {
     }
 
     /**
+     * Returns a `bits` long array of bit values at the specified bit offset.
+     *
+     * @param offset Offset of bits.
+     * @param bits Number of bits to read.
+     */
+    getBitArray(offset: number, bits: number): boolean[] {
+        this.checkBounds(offset, bits);
+
+        const result: boolean[] = [];
+        for (let i = 0; i < bits; i++, offset++) {
+            result[i] = (this.buffer[offset >> 3] >> (7 - (offset & 0b111)) & 0b1) === 1;
+        }
+        return result;
+    }
+
+    /**
      * Writes the bit value at the specified bit offset.
      *
      * @param offset Offset of bit.
@@ -156,6 +172,22 @@ export class BitView {
 
             // Write to buffer
             this.buffer[i] = (this.buffer[i] & ~mask) | (byte << shift);
+        }
+    }
+
+    /**
+     * Writes a `bits` long array of bit values at the specified bit offset.
+     *
+     * @param offset Offset of bits.
+     * @param values Bit values to set.
+     * @param bits Number of bits to write.
+     */
+    setBitArray(offset: number, values: boolean[], bits = values.length) {
+        this.checkBounds(offset, bits);
+
+        for (let i = 0; i < bits; i++, offset++) {
+            if (values[i]) this.buffer[offset >> 3] |= 0b10000000 >> (offset & 0b111);
+            else this.buffer[offset >> 3] &= ~(0b10000000 >> (offset & 0b111));
         }
     }
 
@@ -285,6 +317,12 @@ export class BitStream {
         return val;
     }
 
+    readBitArray(bits: number): boolean[] {
+        const val = this.view.getBitArray(this.bitIndex, bits);
+        this.bitIndex += bits;
+        return val;
+    }
+
     writeBit(value: 1 | 0): void {
         this.view.setBit(this.bitIndex, value);
         this.bitIndex++;
@@ -292,6 +330,11 @@ export class BitStream {
 
     writeBits(value: number, bits: number): void {
         this.view.setBits(this.bitIndex, value, bits);
+        this.bitIndex += bits;
+    }
+
+    writeBitArray(values: boolean[], bits: number): void {
+        this.view.setBitArray(this.bitIndex, values, bits);
         this.bitIndex += bits;
     }
 
