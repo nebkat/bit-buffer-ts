@@ -1,6 +1,6 @@
 {
   "name": "bit-buffer-ts",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Bit-level reads and writes for Uint8Arrays and Node.js Buffers",
   "main": "build/index.js",
   "types": "build/index.d.ts",
